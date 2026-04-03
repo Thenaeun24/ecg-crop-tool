@@ -771,7 +771,7 @@
     ctx.clip();
 
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold ' + fontSize + "px 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
+    ctx.font = 'bold ' + fontSize + "px 'Nanum Gothic', 'Malgun Gothic', sans-serif";
     ctx.textBaseline = 'top';
 
     lines.forEach(function (line, i) {

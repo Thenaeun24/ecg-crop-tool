@@ -12,7 +12,7 @@ img {
 }
 
 body {
-  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+  font-family: 'Nanum Gothic', 'Malgun Gothic', sans-serif;
   font-size: 14px;
   background: #F0F4F8;
   color: #1a1a2e;
@@ -398,7 +398,7 @@ h3 {
   cursor: move;
   user-select: none;
   -webkit-user-select: none;
-  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  font-family: 'Nanum Gothic', 'Malgun Gothic', sans-serif;
   font-size: 14px;
   font-weight: bold;
   line-height: 1.5;

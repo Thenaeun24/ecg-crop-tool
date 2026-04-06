@@ -40,6 +40,7 @@
   let hlResizeOrigTop = 0;
   let hlResizeOrigW = 0;
   let hlResizeOrigH = 0;
+  let lastHlActionTime = 0;
 
   let baseBoxWidth = 0;
   const BASE_FONT_SIZE = 14;
@@ -238,7 +239,7 @@
 
     function onYes() {
       modal.style.display = 'none';
-      var rotated = rotateCanvas(canvas, 90);
+      var rotated = rotateCanvas(canvas, 270);
       showEditSection(rotated.toDataURL('image/jpeg', 0.92));
       cleanup();
     }
@@ -347,7 +348,11 @@
     $('#rotate-cw-btn').addEventListener('click', function () {
       if (cropper) cropper.rotate(90);
     });
-    $('#new-image-btn').addEventListener('click', resetUpload);
+    $('#new-image-btn').addEventListener('click', function () {
+      var fileInput = $('#file-input');
+      fileInput.value = '';
+      fileInput.click();
+    });
     $('#reset-btn').addEventListener('click', resetAll);
     $('#preview-btn').addEventListener('click', showPreview);
     $('#back-btn').addEventListener('click', function () {
@@ -561,6 +566,8 @@
       if (e.target.closest('#text-box')) return;
 
       var hlBox = e.target.closest('.highlight-box');
+      if (Date.now() - lastHlActionTime < 100) return;
+
       if (hlBox) {
         var edge = getHlEdge(hlBox, e.clientX, e.clientY);
         if (edge) {
@@ -721,11 +728,13 @@
       if (isDraggingHl) {
         isDraggingHl = false;
         draggingHlEl = null;
+        lastHlActionTime = Date.now();
         return;
       }
       if (isResizingHl) {
         isResizingHl = false;
         resizingHlEl = null;
+        lastHlActionTime = Date.now();
         return;
       }
       isDragging = false;

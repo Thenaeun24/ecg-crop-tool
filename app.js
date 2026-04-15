@@ -49,6 +49,13 @@
     '최초 리듬', '2차 분석 리듬', '이송중 리듬', '병원 도착 전 리듬', '제세동 리듬'
   ];
 
+  const PDF_RENDER_SCALE = 2.5;
+
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
   // ============ Helpers ============
   const $ = (sel) => document.querySelector(sel);
 
@@ -108,8 +115,21 @@
   }
 
   function handleFile(file) {
+    var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+
+    if (isPdf) {
+      if (typeof pdfjsLib === 'undefined') {
+        alert('PDF 라이브러리를 불러오지 못했습니다. 네트워크 연결을 확인해주세요.');
+        return;
+      }
+      $('#drop-zone').style.display = 'none';
+      $('#loading').style.display = '';
+      processPdf(file);
+      return;
+    }
+
     if (!file.type.startsWith('image/')) {
-      alert('이미지 파일만 업로드할 수 있습니다. (JPG, PNG 등)');
+      alert('이미지 또는 PDF 파일만 업로드할 수 있습니다. (JPG, PNG, PDF)');
       return;
     }
 
@@ -117,6 +137,90 @@
     $('#loading').style.display = '';
 
     processImage(file);
+  }
+
+  // ============ PDF Processing ============
+  function processPdf(file) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var data = new Uint8Array(e.target.result);
+      pdfjsLib.getDocument({ data: data }).promise.then(function (pdf) {
+        if (pdf.numPages <= 1) {
+          renderPdfPage(pdf, 1);
+        } else {
+          showPdfPageSelector(pdf);
+        }
+      }).catch(function (err) {
+        console.error(err);
+        alert('PDF를 불러올 수 없습니다.');
+        resetUpload();
+      });
+    };
+    reader.onerror = function () {
+      alert('파일을 읽을 수 없습니다.');
+      resetUpload();
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function showPdfPageSelector(pdf) {
+    var modal = $('#pdf-page-modal');
+    var select = $('#pdf-page-select');
+    select.innerHTML = '';
+    for (var i = 1; i <= pdf.numPages; i++) {
+      var opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = i + ' / ' + pdf.numPages + ' 페이지';
+      select.appendChild(opt);
+    }
+    modal.style.display = '';
+
+    function onOk() {
+      var pageNum = parseInt(select.value, 10) || 1;
+      modal.style.display = 'none';
+      cleanup();
+      renderPdfPage(pdf, pageNum);
+    }
+    function onCancel() {
+      modal.style.display = 'none';
+      cleanup();
+      resetUpload();
+    }
+    function cleanup() {
+      $('#pdf-page-ok-btn').removeEventListener('click', onOk);
+      $('#pdf-page-cancel-btn').removeEventListener('click', onCancel);
+    }
+    $('#pdf-page-ok-btn').addEventListener('click', onOk);
+    $('#pdf-page-cancel-btn').addEventListener('click', onCancel);
+  }
+
+  function renderPdfPage(pdf, pageNum) {
+    pdf.getPage(pageNum).then(function (page) {
+      var viewport = page.getViewport({ scale: PDF_RENDER_SCALE });
+      var canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      var ctx = canvas.getContext('2d');
+      // PDF can have transparent background; fill white so JPEG export looks right
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function () {
+        if (canvas.height > canvas.width) {
+          showRotationModal(canvas);
+        } else {
+          showEditSection(canvas.toDataURL('image/jpeg', 0.92));
+        }
+      }).catch(function (err) {
+        console.error(err);
+        alert('PDF 페이지를 렌더링할 수 없습니다.');
+        resetUpload();
+      });
+    }).catch(function (err) {
+      console.error(err);
+      alert('PDF 페이지를 불러올 수 없습니다.');
+      resetUpload();
+    });
   }
 
   // ============ EXIF Orientation (manual parser, no library needed) ============

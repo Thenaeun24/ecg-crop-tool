@@ -884,7 +884,7 @@
     ctx.clip();
 
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold ' + fontSize + "px 'Nanum Gothic', 'Malgun Gothic', sans-serif";
+    ctx.font = 'bold ' + fontSize + "px 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif";
     ctx.textBaseline = 'top';
 
     lines.forEach(function (line, i) {
